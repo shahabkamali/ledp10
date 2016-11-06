@@ -13,6 +13,8 @@
 #include "Droid_Sans_24.h"
 #include "Droid_Sans_12.h"
 #include "Droid_Sans_16.h"
+#include "Verdana_digits24.h"
+//#include "Digital.h"
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
 
@@ -78,12 +80,15 @@ void loop() {
     Udp.read(packetBuffer, 128);
     Serial.println("Contents:");
     Serial.println(packetBuffer);
-    show_to_plc(packetBuffer);
-    memset(packetBuffer, '\0', 128);
-    // send a reply to the IP address and port that sent us the packet we received
+    ///reply
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write(ReplyBuffer);
     Udp.endPacket();
+    ///
+    show_to_plc(packetBuffer);
+    memset(packetBuffer, '\0', 128);
+    // send a reply to the IP address and port that sent us the packet we received
+    
   }
   delay(10);
 }
@@ -126,6 +131,7 @@ void show_to_plc(char* text){
   ///
   delay(10);
   dmd.clearScreen( true );
+  //dmd.selectFont(Verdana24);
   set_font(font);
   char  showMessage[128];
   message.toCharArray(showMessage, 128) ;
