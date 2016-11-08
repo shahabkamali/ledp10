@@ -6,21 +6,18 @@
 #include <EthernetUdp.h>         // UDP library from: bjoern@cs.stanford.edu 12/30/2008
 #include <DMD.h>        //
 #include <TimerOne.h>   //
+#include <EEPROM.h>
 #include "SystemFont5x7.h"
 #include "Arial_black_16.h"
 #include "Arial14.h"
-#include "Arial_Black_16_ISO_8859_1.h"
 #include "Droid_Sans_24.h"
-#include "Droid_Sans_12.h"
 #include "Droid_Sans_16.h"
-#include "Verdana_digits24.h"
-//#include "Digital.h"
-// Enter a MAC address and IP address for your controller below.
-// The IP address will be dependent on your local network:
+#include <TrueRandom.h>
+
 
 ///define display
-#define DISPLAYS_ACROSS 1
-#define DISPLAYS_DOWN 2
+#define DISPLAYS_ACROSS 2
+#define DISPLAYS_DOWN 1
 DMD dmd(DISPLAYS_ACROSS, DISPLAYS_DOWN);
 ////
 
@@ -29,10 +26,10 @@ void ScanDMD()
   dmd.scanDisplayBySPI();
 }
 
-byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
-};
-IPAddress ip(192, 168, 0, 177);
+
+byte mac[6] = { 0x90, 0xA2, 0xDA, 0x00, 0x00, 0x00 };
+char macstr[18];
+//IPAddress ip(192, 168, 0, 177);
 
 unsigned int localPort = 8888;      // local port to listen on
 
@@ -43,7 +40,30 @@ char  ReplyBuffer[] = "acknowledged";       // a string to send back
 // An EthernetUDP instance to let us send and receive packets over UDP
 EthernetUDP Udp;
 
+String DisplayAddress(IPAddress address)
+{
+ return String(address[0]) + "." + 
+        String(address[1]) + "." + 
+        String(address[2]) + "." + 
+        String(address[3]);
+}
+
 void setup() {
+   //buffer to hold incoming packet,
+    ///
+    if (EEPROM.read(1) == '#') {
+    for (int i = 3; i < 6; i++) {
+      mac[i] = EEPROM.read(i);
+    }
+  } else {
+    for (int i = 3; i < 6; i++) {
+      mac[i] = TrueRandom.randomByte();
+      EEPROM.write(i, mac[i]);
+    }
+    EEPROM.write(1, '#');
+  }
+  snprintf(macstr, 18, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  Ethernet.begin(mac);
   //initialize TimerOne's interrupt/CPU usage used to scan and refresh the display
    Timer1.initialize( 5000 );           //period in microseconds to call ScanDMD. Anything longer than 5000 (5ms) and you can see flicker.
    Timer1.attachInterrupt( ScanDMD );   //attach the Timer1 interrupt to ScanDMD which goes to dmd.scanDisplayBySPI()
@@ -52,13 +72,23 @@ void setup() {
    dmd.clearScreen( true );   //true is normal (all pixels off), false is negative (all pixels on)
 
   // start the Ethernet and UDP:
-  Ethernet.begin(mac, ip);
+  
   Udp.begin(localPort);
   Serial.begin(9600);
+  Serial.println(Ethernet.localIP());
+  dmd.selectFont(SystemFont5x7);
+  String message=DisplayAddress(Ethernet.localIP());
+  Serial.println(message);
+  char  showIP[15];
+  message.toCharArray(showIP, 15) ;
+  dmd.drawString( 0,2, showIP, 15, GRAPHICS_NORMAL );
+  Serial.println(showIP);
+  delay(10000);
 }
 
 void loop() {
-    //buffer to hold incoming packet,
+   
+    ////
   dmd.clearScreen( true );
   // if there's data available, read a packet
   int packetSize = Udp.parsePacket();
@@ -73,8 +103,6 @@ void loop() {
         Serial.print(".");
       }
     }
-    Serial.print(", port ");
-    Serial.println(Udp.remotePort());
 
     // read the packet into packetBufffer
     Udp.read(packetBuffer, 128);
@@ -99,7 +127,6 @@ void show_to_plc(char* text){
 
   delay(10);
   Serial.println("str");
-  Serial.println(str);
   int index=str.indexOf(';',0);
   String message=str.substring(0,index);
   str=str.substring(message.length()+1,str.length());
@@ -126,8 +153,7 @@ void show_to_plc(char* text){
   String showtime = str.substring(0,index);
   str=str.substring(showtime.length()+1,str.length());
   ///
-  Serial.println("showtime:");
-  Serial.println(showtime);
+
   ///
   delay(10);
   dmd.clearScreen( true );
@@ -177,14 +203,8 @@ void set_font(String  font)
   if(font.equals("Arial14")){
     dmd.selectFont(Arial_14);
   }
-  if(font.equals("Arial_16_ISO")){
-    dmd.selectFont(Arial_Black_16_ISO_8859_1);
-  }
   if(font.equals("Droid_Sans_24")){
     dmd.selectFont(Droid_Sans_24);
-  }
-  if(font.equals("Droid_Sans_12")){
-    dmd.selectFont(Droid_Sans_12);
   }
   if(font.equals("Droid_Sans_16")){
     dmd.selectFont(Droid_Sans_16);
