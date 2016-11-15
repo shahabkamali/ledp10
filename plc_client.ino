@@ -12,12 +12,13 @@
 #include "Arial14.h"
 #include "Droid_Sans_24.h"
 #include "Droid_Sans_16.h"
+#include "My32x15Font.h"
 #include <TrueRandom.h>
 
 
 ///define display
-#define DISPLAYS_ACROSS 2
-#define DISPLAYS_DOWN 1
+#define DISPLAYS_ACROSS 1
+#define DISPLAYS_DOWN 2
 DMD dmd(DISPLAYS_ACROSS, DISPLAYS_DOWN);
 ////
 
@@ -208,6 +209,9 @@ void set_font(String  font)
   }
   if(font.equals("Droid_Sans_16")){
     dmd.selectFont(Droid_Sans_16);
+  }
+  if(font.equals("Font32*15")){
+    dmd.selectFont(My32x15Font);
   }
 }
 
