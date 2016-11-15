@@ -8,8 +8,6 @@
 #include <TimerOne.h>   //
 #include <EEPROM.h>
 #include "SystemFont5x7.h"
-#include "Arial_black_16.h"
-#include "Arial14.h"
 #include "Droid_Sans_24.h"
 #include "Droid_Sans_16.h"
 #include "My32x15Font.h"
@@ -195,14 +193,8 @@ void show_to_plc(char* text){
 void set_font(String  font)
 {
 
-  if(font.equals("Arial16")){
-    dmd.selectFont(Arial_Black_16);
-  }
   if(font=="5*7"){
     dmd.selectFont(SystemFont5x7);
-  }
-  if(font.equals("Arial14")){
-    dmd.selectFont(Arial_14);
   }
   if(font.equals("Droid_Sans_24")){
     dmd.selectFont(Droid_Sans_24);
